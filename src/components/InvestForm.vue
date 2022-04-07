@@ -49,6 +49,7 @@ import FormInput from "./FormInput.vue";
 
       <div :class="{ [$style.limitsDisabled]: !limitsEnabled }">
         <FormInput
+          required
           title="Ограничения в"
           :radio-values="radioOptions"
           v-model:radio-value="radioValue"
@@ -104,6 +105,14 @@ export default {
     };
   },
   watch: {
+    limitsEnabled(newVal: boolean) {
+      if (!newVal) {
+        this.loss = "";
+        this.income = "";
+        this.incomeEnabled = false;
+        this.lossEnabled = false;
+      }
+    },
     incomeEnabled(newVal: boolean) {
       if (!newVal) {
         this.income = "";
@@ -116,12 +125,6 @@ export default {
         this.loss = "";
       } else {
         this.loss = this.radioValue === "$" ? this.sum * 0.3 : 30;
-      }
-    },
-    limitsEnabled(newVal: boolean) {
-      if (!newVal) {
-        this.loss = "";
-        this.income = "";
       }
     },
     radioValue(newVal: string) {
