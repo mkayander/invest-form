@@ -5,11 +5,15 @@ withDefaults(
     name?: string;
     required?: boolean;
     showSwitch?: boolean;
+    step?: string;
+    min?: string;
+    max?: string;
     inputValue?: string | number | boolean;
     checkboxValue?: boolean;
     radioValue?: string;
     radioValues?: { name: string; value: string }[];
     type?: HTMLInputElement["type"];
+    prefix?: string;
     extraText?: string;
   }>(),
   {
@@ -34,16 +38,22 @@ defineEmits(["update:inputValue", "update:checkboxValue", "update:radioValue"]);
     </span>
 
     <span v-if="!radioValues">
+      <span v-if="prefix" :class="$style.prefix">
+        {{ prefix }}
+      </span>
       <input
         v-if="!radioValues"
         :class="{ [$style.input]: true, [$style.withExtra]: extraText }"
         :required="required"
         :type="type"
-        :title="name"
+        :title="title"
         :name="name"
         :value="inputValue"
         :disabled="!checkboxValue"
-        @input="$emit('update:inputValue', $event.target.value)"
+        :step="step"
+        :min="min"
+        :max="max"
+        @change="$emit('update:inputValue', $event.target.value)"
       />
       <span v-if="extraText" :class="$style.extra" :title="extraText">
         {{ extraText }}
@@ -57,8 +67,8 @@ defineEmits(["update:inputValue", "update:checkboxValue", "update:radioValue"]);
         :key="option.name"
       >
         <input
-          required
           type="radio"
+          :required="required"
           :name="option.name"
           :value="option.value"
           :checked="option.value === radioValue"
@@ -96,6 +106,7 @@ export default {
   }
 
   & > span {
+    position: relative;
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -119,7 +130,7 @@ export default {
     height: 24px;
     max-width: 100%;
     min-width: 10px;
-    //width: 100%;
+    width: 100%;
     //flex-grow: 1;
 
     text-align: right;
@@ -127,8 +138,15 @@ export default {
     border: 1px rgba(0, 0, 0, 0.3) solid;
 
     &.withExtra {
-      width: 50px;
+      width: 60px;
     }
+  }
+
+  .prefix {
+    position: absolute;
+    left: 8px;
+    font-size: 0.8rem;
+    color: gray;
   }
 
   .extra {
@@ -145,7 +163,7 @@ export default {
 
   .radio {
     display: inline-flex;
-    margin-right: 6px;
+    margin-right: 12px;
     align-items: center;
 
     &:hover {

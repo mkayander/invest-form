@@ -12,16 +12,24 @@ import FormInput from "./FormInput.vue";
     <div :class="$style.content">
       <FormInput
         required
+        title="Сумма инвестиции"
         name="sum"
         type="number"
-        title="Сумма инвестиции"
+        prefix="$"
+        step="1"
+        min="0"
+        max="200000"
         v-model:input-value="sum"
       />
       <FormInput
         required
+        title="Мультипликатор"
         name="multiplicator"
         type="number"
-        title="Мультипликатор"
+        prefix="&#10005;"
+        step="1"
+        min="1"
+        max="99"
         v-model:input-value="multiplicator"
         :extra-text="`  = $ ${(sum * multiplicator).toLocaleString()}`"
       />
@@ -36,7 +44,6 @@ import FormInput from "./FormInput.vue";
         @click="toggleLimits"
       >
         <p>Ограничить прибыль и убыток</p>
-        <br />
         <span :class="$style.icon">&dArr;</span>
       </div>
 
@@ -50,7 +57,9 @@ import FormInput from "./FormInput.vue";
         <FormInput
           name="income"
           type="number"
+          min="0"
           title="Прибыль"
+          :prefix="radioValue"
           show-switch
           v-model:input-value="income"
           v-model:checkbox-value="incomeEnabled"
@@ -58,7 +67,9 @@ import FormInput from "./FormInput.vue";
         <FormInput
           name="loss"
           type="number"
+          min="0"
           title="Убыток"
+          :prefix="radioValue"
           show-switch
           v-model:input-value="loss"
           v-model:checkbox-value="lossEnabled"
@@ -66,8 +77,8 @@ import FormInput from "./FormInput.vue";
       </div>
 
       <div :class="$style.buttons">
-        <button type="submit">В снижение</button>
-        <button type="submit">В рост</button>
+        <button type="submit" data-direction="reduction">В снижение</button>
+        <button type="submit" data-direction="growth">В рост</button>
       </div>
     </div>
   </form>
@@ -80,7 +91,7 @@ export default {
     return {
       sum: 5000,
       multiplicator: 40,
-      limitsEnabled: true,
+      limitsEnabled: false,
       radioValue: "$",
       radioOptions: [
         { name: "units", value: "%" },
@@ -96,11 +107,15 @@ export default {
     incomeEnabled(newVal: boolean) {
       if (!newVal) {
         this.income = "";
+      } else {
+        this.income = this.radioValue === "$" ? this.sum * 0.3 : 30;
       }
     },
     lossEnabled(newVal: boolean) {
       if (!newVal) {
         this.loss = "";
+      } else {
+        this.loss = this.radioValue === "$" ? this.sum * 0.3 : 30;
       }
     },
     limitsEnabled(newVal: boolean) {
@@ -110,14 +125,41 @@ export default {
       }
     },
     radioValue(newVal: string) {
-      console.log(newVal);
+      if (this.incomeEnabled) {
+        this.income = newVal === "$" ? this.sum * 0.3 : 30;
+      }
+      if (this.lossEnabled) {
+        this.loss = newVal === "$" ? this.sum * 0.3 : 30;
+      }
     },
   },
   methods: {
-    submitForm(ev: Event) {
+    submitForm(ev: any) {
       ev.preventDefault();
-      console.log(this.sum);
-      alert("Form successfully submitted");
+
+      const data = {
+        sumInv: this.sum,
+        mult: this.multiplicator,
+        direction: ev.submitter.attributes["data-direction"]?.value,
+      };
+
+      if (this.income) {
+        if (this.radioValue === "%") {
+          data.takeProfit = this.sum * (this.income / 100);
+        } else {
+          data.takeProfit = this.income;
+        }
+      }
+
+      if (this.loss) {
+        if (this.radioValue === "%") {
+          data.stopLoss = this.sum * (this.loss / 100);
+        } else {
+          data.stopLoss = this.loss;
+        }
+      }
+
+      alert("Form successfully submitted!\n" + JSON.stringify(data, null, 2));
     },
     toggleLimits() {
       this.limitsEnabled = !this.limitsEnabled;
@@ -145,6 +187,8 @@ export default {
 
     .spoilerHead {
       position: relative;
+      margin-bottom: 8px;
+      color: gray;
 
       &Disabled {
         .icon {
