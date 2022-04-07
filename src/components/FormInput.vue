@@ -35,17 +35,17 @@ defineEmits(["update:inputValue", "update:checkboxValue", "update:radioValue"]);
 
     <span v-if="!radioValues">
       <input
-        :class="$style.input"
+        v-if="!radioValues"
+        :class="{ [$style.input]: true, [$style.withExtra]: extraText }"
         :required="required"
         :type="type"
         :title="name"
         :name="name"
         :value="inputValue"
-        v-if="!radioValues"
         :disabled="!checkboxValue"
         @input="$emit('update:inputValue', $event.target.value)"
       />
-      <span v-if="extraText">
+      <span v-if="extraText" :class="$style.extra" :title="extraText">
         {{ extraText }}
       </span>
     </span>
@@ -83,6 +83,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  height: 38px;
   padding: 4px 0;
 
   .toggle {
@@ -99,7 +101,9 @@ export default {
     align-items: center;
     //flex-grow: 0;
     //max-width: 100%/2;
-    width: 50%;
+    width: calc(50% - ($centerGap / 2));
+    //min-width: 50%;
+    //white-space: pre;
     //margin-right: $centerGap;
   }
 
@@ -110,11 +114,33 @@ export default {
   //width: 100%;
 
   .input {
+    //position: relative;
     border-radius: 3px;
     height: 24px;
-    width: 100%;
+    max-width: 100%;
+    min-width: 10px;
+    //width: 100%;
+    //flex-grow: 1;
+
+    text-align: right;
 
     border: 1px rgba(0, 0, 0, 0.3) solid;
+
+    &.withExtra {
+      width: 50px;
+    }
+  }
+
+  .extra {
+    display: inline-block;
+    max-width: calc(100% - 50px);
+    color: gray;
+    white-space: pre;
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    flex-grow: 1;
   }
 
   .radio {

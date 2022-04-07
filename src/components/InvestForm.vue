@@ -23,6 +23,7 @@ import FormInput from "./FormInput.vue";
         type="number"
         title="Мультипликатор"
         v-model:input-value="multiplicator"
+        :extra-text="`  = $ ${(sum * multiplicator).toLocaleString()}`"
       />
 
       <br />
@@ -65,7 +66,7 @@ import FormInput from "./FormInput.vue";
       </div>
 
       <div :class="$style.buttons">
-        <button type="button">В снижение</button>
+        <button type="submit">В снижение</button>
         <button type="submit">В рост</button>
       </div>
     </div>
