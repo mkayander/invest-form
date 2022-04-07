@@ -1,0 +1,22 @@
+.container, header {
+  padding: 3rem 5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+}
+
+hr {
+  margin: 0;
+}
+
+input {
+  outline: none;
+  border: none;
+
+  margin: 0;
+}
