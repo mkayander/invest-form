@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FormInput from "./FormInput.vue";
+import SendButton from "./SendButton.vue";
 </script>
 
 <template>
@@ -20,6 +21,7 @@ import FormInput from "./FormInput.vue";
         min="0"
         max="200000"
         v-model:input-value="sum"
+        :errors="errors['sum']"
       />
       <FormInput
         required
@@ -31,7 +33,8 @@ import FormInput from "./FormInput.vue";
         min="1"
         max="99"
         v-model:input-value="multiplicator"
-        :extra-text="`  = $ ${(sum * multiplicator).toLocaleString()}`"
+        :errors="errors['multiplicator']"
+        :extra-text="` = $ ${(sum * multiplicator).toLocaleString()}`"
       />
 
       <br />
@@ -44,7 +47,7 @@ import FormInput from "./FormInput.vue";
         @click="toggleLimits"
       >
         <p>Ограничить прибыль и убыток</p>
-        <span :class="$style.icon">&dArr;</span>
+        <img :class="$style.icon" src="@/assets/arr.png" alt="expand" />
       </div>
 
       <div :class="{ [$style.limitsDisabled]: !limitsEnabled }">
@@ -62,6 +65,8 @@ import FormInput from "./FormInput.vue";
           title="Прибыль"
           :prefix="radioValue"
           show-switch
+          show-arrows
+          :errors="errors['income']"
           v-model:input-value="income"
           v-model:checkbox-value="incomeEnabled"
         />
@@ -72,14 +77,16 @@ import FormInput from "./FormInput.vue";
           title="Убыток"
           :prefix="radioValue"
           show-switch
+          show-arrows
+          :errors="errors['loss']"
           v-model:input-value="loss"
           v-model:checkbox-value="lossEnabled"
         />
       </div>
 
       <div :class="$style.buttons">
-        <button type="submit" data-direction="reduction">В снижение</button>
-        <button type="submit" data-direction="growth">В рост</button>
+        <SendButton direction="reduction">В снижение</SendButton>
+        <SendButton direction="growth">В рост</SendButton>
       </div>
     </div>
   </form>
@@ -102,6 +109,7 @@ export default {
       incomeEnabled: false,
       loss: "",
       lossEnabled: false,
+      errors: {},
     };
   },
   watch: {
@@ -137,8 +145,78 @@ export default {
     },
   },
   methods: {
+    getLimitsValue(value: number) {
+      if (this.radioValue === "%") {
+        return this.sum * (value / 100);
+      }
+
+      return value;
+    },
+    validateItem(isInvalid: boolean, name: string, message: string) {
+      if (isInvalid) {
+        this.errors[name] = this.errors[name]
+          ? this.errors[name].push(message)
+          : [message];
+      }
+    },
+    validateForm() {
+      this.errors = {};
+
+      this.validateItem(
+        this.sum < 100,
+        "sum",
+        "Минимальная сумма инвестиции $ 100"
+      );
+
+      this.validateItem(
+        this.multiplicator < 1 || this.multiplicator > 40,
+        "multiplicator",
+        "Неверное значение мультипликатора"
+      );
+
+      if (this.income !== "") {
+        this.validateItem(
+          this.sum / this.getLimitsValue(this.income) > 10,
+          "income",
+          this.radioValue === "%"
+            ? "Не может быть меньше 10%"
+            : `Не может быть меньше $ ${(this.sum * 0.1).toLocaleString()}`
+        );
+      }
+
+      if (this.loss !== "") {
+        this.validateItem(
+          this.sum / this.getLimitsValue(this.loss) > 10,
+          "loss",
+          this.radioValue === "%"
+            ? "Не может быть меньше 10%"
+            : `Не может быть меньше $ ${(this.sum * 0.1).toLocaleString()}`
+        );
+
+        this.validateItem(
+          this.getLimitsValue(this.loss) > this.sum,
+          "loss",
+          this.radioValue === "%"
+            ? "Не может быть больше 100%"
+            : `Не может быть больше $ ${this.sum.toLocaleString()}`
+        );
+      }
+
+      if (Object.keys(this.errors).length > 0) {
+        throw new Error(
+          "Form validation failed!\n" + JSON.stringify(this.errors, null, 2)
+        );
+      }
+    },
     submitForm(ev: any) {
       ev.preventDefault();
+
+      try {
+        this.validateForm();
+      } catch (e) {
+        console.error(e);
+        return;
+      }
 
       const data = {
         sumInv: this.sum,
@@ -146,23 +224,12 @@ export default {
         direction: ev.submitter.attributes["data-direction"]?.value,
       };
 
-      if (this.income) {
-        if (this.radioValue === "%") {
-          data.takeProfit = this.sum * (this.income / 100);
-        } else {
-          data.takeProfit = this.income;
-        }
-      }
+      if (this.income) data.takeProfit = this.getLimitsValue(this.income);
+      if (this.loss) data.stopLoss = this.getLimitsValue(this.loss);
 
-      if (this.loss) {
-        if (this.radioValue === "%") {
-          data.stopLoss = this.sum * (this.loss / 100);
-        } else {
-          data.stopLoss = this.loss;
-        }
-      }
-
-      alert("Form successfully submitted!\n" + JSON.stringify(data, null, 2));
+      setTimeout(() => {
+        alert("Form successfully submitted!\n" + JSON.stringify(data, null, 2));
+      }, 200);
     },
     toggleLimits() {
       this.limitsEnabled = !this.limitsEnabled;
@@ -175,18 +242,22 @@ export default {
 @import "../src/styles/variables";
 
 .root {
-  width: 350px;
+  width: 316px;
   background: #fff;
   color: #000;
+
+  font-size: 13px;
 
   //padding: 0 24px;
 
   .header {
-    padding: 12px $xPadding;
+    padding: 12px $rPadding 12px $lPadding;
+    font-size: 16px;
+    font-family: Roboto, sans-serif;
   }
 
   .content {
-    padding: 12px $xPadding;
+    padding: 12px $rPadding 12px $lPadding;
 
     .spoilerHead {
       position: relative;
@@ -204,10 +275,14 @@ export default {
       }
 
       .icon {
-        height: 12px;
+        //display: inline;
+        //height: 12px;
         position: absolute;
-        top: 0;
+        top: 2px;
         left: -1em;
+        //font-size: 0.5rem;
+        //font-weight: 900;
+        //transform: rotate(180deg);
       }
     }
 
@@ -223,11 +298,6 @@ export default {
 
       & > *:first-child {
         margin-right: $centerGap;
-      }
-
-      button {
-        width: 100%;
-        height: 42px;
       }
     }
   }

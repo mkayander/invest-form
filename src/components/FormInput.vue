@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import ErrorPopover from "@/components/ErrorPopover.vue";
+import { ref } from "vue";
+
+const popoverRef = ref();
+
 withDefaults(
   defineProps<{
     title: string;
@@ -15,6 +20,8 @@ withDefaults(
     type?: HTMLInputElement["type"];
     prefix?: string;
     extraText?: string;
+    showArrows?: boolean;
+    errors?: string[];
   }>(),
   {
     checkboxValue: true,
@@ -42,8 +49,14 @@ defineEmits(["update:inputValue", "update:checkboxValue", "update:radioValue"]);
         {{ prefix }}
       </span>
       <input
+        ref="popoverRef"
         v-if="!radioValues"
-        :class="{ [$style.input]: true, [$style.withExtra]: extraText }"
+        :class="{
+          [$style.input]: true,
+          [$style.withExtra]: extraText,
+          [$style.error]: errors,
+          [$style.withArrows]: showArrows,
+        }"
         :required="required"
         :type="type"
         :title="title"
@@ -53,8 +66,14 @@ defineEmits(["update:inputValue", "update:checkboxValue", "update:radioValue"]);
         :step="step"
         :min="min"
         :max="max"
-        @change="$emit('update:inputValue', $event.target.value)"
+        @input="$emit('update:inputValue', $event.target.value)"
+        @blur="trimValue(inputValue)"
       />
+
+      <ErrorPopover v-if="errors?.length > 0" show :target="popoverRef">
+        {{ errors.join("\n") }}
+      </ErrorPopover>
+
       <span v-if="extraText" :class="$style.extra" :title="extraText">
         {{ extraText }}
       </span>
@@ -83,6 +102,22 @@ defineEmits(["update:inputValue", "update:checkboxValue", "update:radioValue"]);
 <script lang="ts">
 export default {
   name: "FormInput",
+  methods: {
+    trimValue(value: any) {
+      if (
+        this.min !== undefined &&
+        this.max !== undefined &&
+        this.type === "number"
+      ) {
+        const val = Math.max(this.min, Math.min(value, this.max));
+        console.log(value, this.min, this.max);
+        console.log(val);
+        this.$emit("update:inputValue", val);
+      }
+
+      // return value;
+    },
+  },
 };
 </script>
 
@@ -133,19 +168,42 @@ export default {
     width: 100%;
     //flex-grow: 1;
 
+    padding-right: 8px;
+
     text-align: right;
 
     border: 1px rgba(0, 0, 0, 0.3) solid;
 
     &.withExtra {
-      width: 60px;
+      width: 48px;
+    }
+
+    &.error {
+      border-color: red;
+    }
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      //margin: 0;
+    }
+
+    &.withArrows {
+      padding-right: 0;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: meter;
+        opacity: 1;
+        //margin: 0;
+      }
     }
   }
 
   .prefix {
     position: absolute;
     left: 8px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: gray;
   }
 
