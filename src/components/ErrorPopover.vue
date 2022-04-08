@@ -1,25 +1,16 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { usePopperjs, Trigger } from "vue-use-popperjs";
+import { ref } from "vue";
+import { usePopperjs } from "vue-use-popperjs";
 
 const props = defineProps<{
   show?: boolean;
   target: any;
 }>();
 
-// const popcorn = ref();
 const tooltip = ref();
-// const forceShow = ref(props.show);
-// const useDelayOnMouseover = ref(true);
-// const delayOnMouseover = computed(() => (useDelayOnMouseover.value ? 300 : 0));
-// const useDelayOnMouseout = ref(true);
-// const delayOnMouseout = computed(() => (useDelayOnMouseout.value ? 300 : 0));
-const { visible } = usePopperjs(props.target, tooltip, {
-  // trigger,
-  // trigger: 'manual',
+usePopperjs(props.target, tooltip, {
+  placement: "top-start",
   forceShow: props.show,
-  // delayOnMouseover,
-  // delayOnMouseout,
   modifiers: [
     {
       name: "offset",
@@ -33,12 +24,6 @@ const { visible } = usePopperjs(props.target, tooltip, {
 
 <template>
   <div class="root">
-    <!--    <div-->
-    <!--      :tabindex="trigger === 'focus' ? 0 : undefined"-->
-    <!--      ref="popcorn"-->
-    <!--      id="popcorn"-->
-    <!--      aria-describedby="tooltip"-->
-    <!--    ></div>-->
     <div ref="tooltip" id="tooltip" role="tooltip">
       <slot></slot>
       <div id="arrow" data-popper-arrow></div>
@@ -53,17 +38,6 @@ export default {
 </script>
 
 <style scoped lang="scss">
-/*#root {*/
-/*  background-color: #30263d;*/
-/*  font-family: -apple-system, Helvetica Neue, Segoe UI, Roboto, Oxygen, Ubuntu,*/
-/*    Cantarell, Open Sans, sans-serif;*/
-/*  text-transform: uppercase;*/
-/*  display: flex;*/
-/*  align-items: center;*/
-/*  justify-content: center;*/
-/*  height: 220px;*/
-/*}*/
-
 #popcorn {
   display: inline-block;
   width: 134px;
